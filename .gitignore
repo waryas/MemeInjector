@@ -1,0 +1,13 @@
+
+*.opendb
+*.db
+*.pdb
+*.exe
+*.ilk
+*.obj
+*.idb
+*.tlog
+*.pch
+*.log
+*.ipch
+MEMEInjector/.vs/ConsoleApplication5/v15/.suo
