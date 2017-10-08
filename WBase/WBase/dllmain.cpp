@@ -26,7 +26,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpReserved)
 		hAppInstance = hinstDLL;
 		NtContinue fnNtContinue;
 		fnNtContinue = (NtContinue)(*(uintptr_t*)(0x55550000));
-
+		/* Cleanup */
+		VirtualProtectEx(GetCurrentProcess(), fnNtContinue, 6, PAGE_EXECUTE_READ, 0);
 		VirtualFree((LPVOID)0x55550000, 0, MEM_RELEASE);
 		VirtualFree((LPVOID)0x55560000, 0, MEM_RELEASE);
 
