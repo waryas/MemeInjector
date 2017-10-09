@@ -70,7 +70,7 @@ auto HandleReceiver(HANDLE *io_port) {
 				auto toFreeOne = VirtualAllocEx(race_handle, (LPVOID)0x55550000, sizeof(sNtContinueHook), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 				ReadProcessMemory(race_handle, sNtContinueHook.ptrFn, &sNtContinueHook.ntContinueOriginal[0], sizeof(sNtContinueHook.ntContinueOriginal), 0);
 				WriteProcessMemory(race_handle, (LPVOID)0x55550000, &sNtContinueHook, sizeof(sNtContinueHook), 0);
-				VirtualProtectEx(race_handle, ntContinue, sizeof(ntContinueHook), PAGE_EXECUTE_READWRITE, &oldProtect);
+				//Install hook
 				WriteProcessMemory(race_handle, sNtContinueHook.ptrFn, ntContinueHook, sizeof(ntContinueHook), 0);
 				CloseHandle(race_handle);
 				ExitThread(0);

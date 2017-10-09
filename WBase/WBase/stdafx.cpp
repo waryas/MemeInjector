@@ -36,12 +36,6 @@ DLLEXPORT ULONG_PTR WINAPI NiggerLoader(VOID)
 	ULONG_PTR uiLibraryAddress;
 	uiLibraryAddress = caller();
 
-#ifdef REFLECTIVEDLLINJECTION_VIA_LOADREMOTELIBRARYR
-	
-	uint64_t * ptr = (uint64_t*)(*(uintptr_t*)(0x55550000));
-	*ptr = *(uint64_t*)(0x55550000+sizeof(uintptr_t));
-#endif
-
 	USHORT usCounter;
 
 	// the initial location of this image in memory
