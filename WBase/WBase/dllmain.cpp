@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include <stdio.h>
 #include <Psapi.h>
-
+#include <fcntl.h>
 extern HINSTANCE hAppInstance;
 
 
@@ -26,19 +26,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpReserved)
 
 		hAppInstance = hinstDLL;
 		NtContinue fnNtContinue;
+		DWORD oldProt;
 		fnNtContinue = (NtContinue)(*(uintptr_t*)(0x55550000));
 		/* Cleanup */
-		VirtualProtectEx(GetCurrentProcess(), fnNtContinue, 6, PAGE_EXECUTE_READ, 0);
+		VirtualProtectEx(GetCurrentProcess(), fnNtContinue, 8, PAGE_EXECUTE_READ, &oldProt);
 		VirtualFree((LPVOID)0x55550000, 0, MEM_RELEASE);
 		VirtualFree((LPVOID)0x55560000, 0, MEM_RELEASE);
-
 		AllocConsole();
-
 		freopen("CONOUT$", "w", stdout);
 		GetModuleFileNameA(0, buffer, MAX_PATH);
-
 		printf("Mapped inside %s\n", buffer);
-
+		//SetConsoleOutputCP(_O_U16TEXT);
 		fnNtContinue((PCONTEXT)lpReserved, false);
 
 		break;

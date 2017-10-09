@@ -49,10 +49,16 @@ auto HandleReceiver(HANDLE *io_port) {
 	ULONG_PTR cKey;
 	char buffer[MAX_PATH];
 	LPOVERLAPPED pid;
-	BYTE ntContinueHook[] = "\x68\x00\x00\x00\x00\xC3";
 
+	BYTE ntContinueHook[8] = { 0x68, 0x00, 0x00, 0x00, 0x00, 0xC3, 0x90, 0x90 };
 
+	struct myHook {
+		FARPROC ptrFn;
+		BYTE ntContinueOriginal[8];
+	};
 
+	myHook sNtContinueHook = { ntContinue, {0} };
+	
 	while (GetQueuedCompletionStatus(*io_port, &nOfBytes, &cKey, &pid, -1))
 		if (nOfBytes == 6) {
 			auto race_handle = OpenProcess(PROCESS_ALL_ACCESS, false, (DWORD)pid);
@@ -61,10 +67,11 @@ auto HandleReceiver(HANDLE *io_port) {
 				auto ret = LoadRemoteLibraryR(race_handle, reflectiveDll.buffer, reflectiveDll.size, reflectiveDll.offset);
 				ptr = (uint64_t)ret;
 				*(unsigned int*)(ntContinueHook + 1) = (unsigned int)ret;
-				auto toFreeOne = VirtualAllocEx(race_handle, (LPVOID)0x55550000, sizeof(uintptr_t), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-				WriteProcessMemory(race_handle, (LPVOID)0x55550000, &ntContinue, sizeof(ntContinue), 0);
-				VirtualProtectEx(race_handle, ntContinue, 6, PAGE_EXECUTE_READWRITE, &oldProtect);
-				WriteProcessMemory(race_handle, ntContinue, ntContinueHook, sizeof(ntContinueHook)-1, 0);
+				auto toFreeOne = VirtualAllocEx(race_handle, (LPVOID)0x55550000, sizeof(sNtContinueHook), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+				ReadProcessMemory(race_handle, sNtContinueHook.ptrFn, &sNtContinueHook.ntContinueOriginal[0], sizeof(sNtContinueHook.ntContinueOriginal), 0);
+				WriteProcessMemory(race_handle, (LPVOID)0x55550000, &sNtContinueHook, sizeof(sNtContinueHook), 0);
+				VirtualProtectEx(race_handle, ntContinue, sizeof(ntContinueHook), PAGE_EXECUTE_READWRITE, &oldProtect);
+				WriteProcessMemory(race_handle, sNtContinueHook.ptrFn, ntContinueHook, sizeof(ntContinueHook), 0);
 				CloseHandle(race_handle);
 				ExitThread(0);
 			}

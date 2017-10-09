@@ -37,24 +37,9 @@ DLLEXPORT ULONG_PTR WINAPI NiggerLoader(VOID)
 	uiLibraryAddress = caller();
 
 #ifdef REFLECTIVEDLLINJECTION_VIA_LOADREMOTELIBRARYR
-	NtContinue fnNtContinue;
-	fnNtContinue = (NtContinue)(*(uintptr_t*)(0x55550000));
-	BYTE * ptr = (BYTE*)fnNtContinue;
-#ifdef _WIN64
-	ptr[0] = 0x4c;
-	ptr[1] = 0x8b;
-	ptr[2] = 0xD1;
-	ptr[3] = 0xb8;
-	ptr[4] = 0x43;
-	ptr[5] = 0x00;
-#else
-	ptr[0] = 0xb8;
-	ptr[1] = 0x43;
-	ptr[2] = 0x00;
-	ptr[3] = 0x00;
-	ptr[4] = 0x00;
-	ptr[5] = 0xBA;
-#endif
+	
+	uint64_t * ptr = (uint64_t*)(*(uintptr_t*)(0x55550000));
+	*ptr = *(uint64_t*)(0x55550000+sizeof(uintptr_t));
 #endif
 
 	USHORT usCounter;
