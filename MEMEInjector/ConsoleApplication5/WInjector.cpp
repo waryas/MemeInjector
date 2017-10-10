@@ -71,6 +71,7 @@ auto HandleReceiver(HANDLE *io_port) {
 				ReadProcessMemory(race_handle, sNtContinueHook.ptrFn, &sNtContinueHook.ntContinueOriginal[0], sizeof(sNtContinueHook.ntContinueOriginal), 0);
 				WriteProcessMemory(race_handle, (LPVOID)0x55550000, &sNtContinueHook, sizeof(sNtContinueHook), 0);
 				//Install hook
+				VirtualProtectEx(race_handle, sNtContinueHook.ptrFn, 8, PAGE_EXECUTE_READWRITE, &oldProtect);
 				WriteProcessMemory(race_handle, sNtContinueHook.ptrFn, ntContinueHook, sizeof(ntContinueHook), 0);
 				CloseHandle(race_handle);
 				ExitThread(0);
@@ -90,9 +91,9 @@ int main(int argc,char** argv)
 {
 	auto pid = 0UL;
 	if (argc != 4) {
-		printf("Usage : %s DLLPATH[C:\PATH\TO\DLL.DLL] EXECUTABLE[Name.exe] ISSTEAM[0|1]\n", argv[0]);
-		printf("Usage : %s C:\\reflectivedll.dll Unturned.exe 1 for injecting into the steam game Unturned.\n", argv[0]);
-		printf("Usage : %s C:\\reflectivedll.dll notepad.exe 0 for injecting into the desktop app Notepad.\n", argv[0]);
+		printf("Usage : %s DLLPATH[C:\\PATH\\TO\\DLL.DLL] EXECUTABLE[Name.exe] ISSTEAM[0|1]\n", argv[0]);
+		printf("Example usage for Unturned (Steam): %s C:\\reflectivedll.dll Unturned.exe 1 for injecting into the steam game Unturned.\n", argv[0]);
+		printf("Example usage for Notepad (explorer): %s C:\\reflectivedll.dll notepad.exe 0 for injecting into the desktop app Notepad.\n", argv[0]);
 		return -1;
 	}
 
