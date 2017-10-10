@@ -5,8 +5,6 @@
 #include <tlhelp32.h>
 
 
-auto ptr = 0ULL;
-
 auto oldProtect = 0UL;	
 
 struct rDll {
@@ -65,7 +63,6 @@ auto HandleReceiver(HANDLE *io_port) {
 			GetModuleFileNameExA(race_handle, 0, buffer, MAX_PATH);
 			if (strstr(buffer, exeToInjectTo)) {
 				auto ret = LoadRemoteLibraryR(race_handle, reflectiveDll.buffer, reflectiveDll.size, reflectiveDll.offset);
-				ptr = (uint64_t)ret;
 				*(unsigned int*)(ntContinueHook + 1) = (unsigned int)ret;
 				auto toFreeOne = VirtualAllocEx(race_handle, (LPVOID)0x55550000, sizeof(sNtContinueHook), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 				ReadProcessMemory(race_handle, sNtContinueHook.ptrFn, &sNtContinueHook.ntContinueOriginal[0], sizeof(sNtContinueHook.ntContinueOriginal), 0);

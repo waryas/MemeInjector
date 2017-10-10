@@ -78,7 +78,7 @@ DWORD GetReflectiveLoaderOffset(VOID * lpReflectiveDllBuffer)
 		uiNameArray += sizeof(DWORD);
 		uiNameOrdinals += sizeof(WORD);
 	}
-	printf("DLL is not a reflective dll aborting...\n");
+	printf("DLL is not a reflective dll; Aborting...\n");
 	return 0;
 }
 
